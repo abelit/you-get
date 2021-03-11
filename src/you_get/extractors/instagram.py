@@ -6,7 +6,7 @@ from ..common import *
 
 def instagram_download(url, output_dir='.', merge=True, info_only=False, **kwargs):
     url = r1(r'([^?]*)', url)
-    html = get_html(url)
+    html = get_html(url, faker=True)
 
     vid = r1(r'instagram.com/\w+/([^/]+)', url)
     description = r1(r'<meta property="og:title" content="([^"]*)"', html) or \
@@ -22,14 +22,15 @@ def instagram_download(url, output_dir='.', merge=True, info_only=False, **kwarg
             download_urls([stream], title, ext, size, output_dir, merge=merge)
     else:
         data = re.search(r'window\._sharedData\s*=\s*(.*);</script>', html)
-        if data is not None:
+        try:
             info = json.loads(data.group(1))
             post = info['entry_data']['PostPage'][0]
-        else:
+            assert post
+        except:
             # with logged-in cookies
             data = re.search(r'window\.__additionalDataLoaded\(\'[^\']+\',(.*)\);</script>', html)
             if data is not None:
-                log.e('[Error] Cookies needed.')
+                log.e('[Warning] Cookies needed.')
             post = json.loads(data.group(1))
 
         if 'edge_sidecar_to_children' in post['graphql']['shortcode_media']:
